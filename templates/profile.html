@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Profile — InterviewAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#080c14; --surface:#0d1420; --surface2:#111827;
+    --border:rgba(99,179,237,0.12); --accent:#38bdf8;
+    --accent2:#818cf8; --accent3:#34d399; --text:#e2e8f0; --muted:#64748b;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+  body::before{
+    content:'';position:fixed;inset:0;
+    background-image:linear-gradient(rgba(99,179,237,0.03) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(99,179,237,0.03) 1px,transparent 1px);
+    background-size:60px 60px;pointer-events:none;z-index:0;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar{position:fixed;left:0;top:0;bottom:0;width:275px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:50;}
+  .sidebar-logo{padding:1.5rem;border-bottom:1px solid var(--border);font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .sidebar-logo span{-webkit-text-fill-color:var(--accent3);}
+  .sidebar-nav{flex:1;padding:1.5rem 1rem;}
+  .nav-item{display:flex;align-items:center;gap:0.75rem;padding:0.7rem 0.8rem;border-radius:10px;color:var(--muted);font-size:0.9rem;font-weight:500;cursor:pointer;transition:all 0.2s;margin-bottom:0.3rem;text-decoration:none;}
+  .nav-item:hover{background:rgba(56,189,248,0.08);color:var(--text);}
+  .nav-item.active{background:rgba(56,189,248,0.12);color:var(--accent);}
+  .nav-item .icon{font-size:1.1rem;width:20px;text-align:center;}
+  .sidebar-footer{padding:1rem;border-top:1px solid var(--border);}
+  .user-info{display:flex;align-items:center;gap:0.75rem;margin-bottom:0.8rem;}
+  .avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:0.85rem;color:#000;}
+  .user-name{font-size:0.88rem;font-weight:500;}
+  .user-email{font-size:0.75rem;color:var(--muted);}
+  .btn-logout{width:100%;padding:0.6rem;border-radius:8px;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.83rem;cursor:pointer;transition:all 0.2s;}
+  .btn-logout:hover{border-color:rgba(248,113,113,0.4);color:#f87171;}
+
+  /* ── Main ── */
+  .main{margin-left:275px;padding:2.5rem;position:relative;z-index:1;}
+
+  /* ── Profile Hero ── */
+  .profile-hero{
+    background:var(--surface);border:1px solid var(--border);border-radius:20px;
+    padding:2.5rem;margin-bottom:1.5rem;display:flex;gap:2rem;align-items:flex-start;
+    position:relative;overflow:hidden;
+  }
+  .profile-hero::before{
+    content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;
+    background:radial-gradient(circle,rgba(56,189,248,0.08),transparent 70%);
+    border-radius:50%;pointer-events:none;
+  }
+  .avatar-wrap{position:relative;flex-shrink:0;}
+  .avatar-large{
+    width:100px;height:100px;border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;color:#000;
+    cursor:pointer;transition:opacity 0.2s;position:relative;overflow:hidden;
+  }
+  .avatar-large img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+  .avatar-large:hover{opacity:0.85;}
+  .avatar-edit{
+    position:absolute;bottom:2px;right:2px;
+    background:var(--accent);border-radius:50%;width:26px;height:26px;
+    display:flex;align-items:center;justify-content:center;font-size:0.75rem;
+    cursor:pointer;border:2px solid var(--bg);
+  }
+  #picInput{display:none;}
+  .profile-meta{flex:1;}
+  .profile-name{font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;margin-bottom:0.2rem;}
+  .profile-email{color:var(--muted);font-size:0.9rem;margin-bottom:1rem;}
+  .profile-bio{font-size:0.9rem;color:var(--text);line-height:1.6;margin-bottom:1rem;max-width:560px;}
+  .profile-links{display:flex;gap:0.75rem;flex-wrap:wrap;}
+  .profile-link{
+    display:flex;align-items:center;gap:0.4rem;padding:0.35rem 0.85rem;
+    border-radius:50px;border:1px solid var(--border);
+    color:var(--muted);font-size:0.82rem;text-decoration:none;transition:all 0.2s;
+  }
+  .profile-link:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-edit{
+    margin-left:auto;padding:0.6rem 1.3rem;border-radius:10px;
+    background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);
+    color:var(--accent);font-family:'DM Sans',sans-serif;font-size:0.88rem;
+    font-weight:500;cursor:pointer;transition:all 0.2s;white-space:nowrap;
+  }
+  .btn-edit:hover{background:rgba(56,189,248,0.18);}
+
+  /* ── Stats Row ── */
+  .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;}
+  .stat-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:1.4rem 1.5rem;text-align:center;
+  }
+  .stat-val{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--accent);margin-bottom:0.3rem;}
+  .stat-lbl{font-size:0.82rem;color:var(--muted);}
+
+  /* ── Section ── */
+  .section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.8rem;margin-bottom:1.5rem;}
+  .section-title{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:1.4rem;display:flex;align-items:center;gap:0.5rem;}
+  .section-title .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);}
+
+  /* ── Interview Cards ── */
+  .interview-list{display:flex;flex-direction:column;gap:0.75rem;}
+  .interview-card{
+    background:var(--surface2);border:1px solid var(--border);border-radius:12px;
+    padding:1.1rem 1.3rem;display:flex;align-items:center;gap:1rem;
+    transition:border-color 0.2s;cursor:pointer;
+  }
+  .interview-card:hover{border-color:rgba(56,189,248,0.3);}
+  .iv-icon{font-size:1.6rem;flex-shrink:0;}
+  .iv-field{font-weight:600;font-size:0.93rem;margin-bottom:0.15rem;}
+  .iv-date{font-size:0.78rem;color:var(--muted);}
+  .iv-score{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:0.2rem;}
+  .score-pill{
+    padding:0.2rem 0.75rem;border-radius:50px;font-size:0.78rem;font-weight:600;
+  }
+  .score-high{background:rgba(52,211,153,0.15);color:var(--accent3);border:1px solid rgba(52,211,153,0.3);}
+  .score-med{background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);}
+  .score-low{background:rgba(248,113,113,0.15);color:#f87171;border:1px solid rgba(248,113,113,0.3);}
+  .iv-cv{font-size:0.75rem;color:var(--muted);margin-top:0.1rem;}
+  .empty-state{text-align:center;padding:2.5rem;color:var(--muted);font-size:0.9rem;}
+
+  /* ── Edit Modal ── */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2rem;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;}
+  .modal-title{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:1.5rem;}
+  .form-group{margin-bottom:1rem;}
+  .form-label{display:block;font-size:0.82rem;color:var(--muted);margin-bottom:0.4rem;}
+  .form-input{
+    width:100%;padding:0.75rem 1rem;background:var(--bg);border:1px solid var(--border);
+    border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;
+    outline:none;transition:border-color 0.2s,box-shadow 0.2s;
+  }
+  .form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(56,189,248,0.1);}
+  textarea.form-input{resize:vertical;min-height:80px;}
+  .modal-actions{display:flex;gap:0.75rem;margin-top:1.5rem;}
+  .btn-primary{
+    flex:1;padding:0.75rem;border-radius:10px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border:none;color:#000;font-family:'DM Sans',sans-serif;font-weight:600;
+    font-size:0.9rem;cursor:pointer;transition:opacity 0.2s;
+  }
+  .btn-primary:hover{opacity:0.88;}
+  .btn-secondary{
+    padding:0.75rem 1.2rem;border-radius:10px;background:transparent;
+    border:1px solid var(--border);color:var(--muted);
+    font-family:'DM Sans',sans-serif;font-size:0.9rem;cursor:pointer;transition:all 0.2s;
+  }
+  .btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+  .alert{padding:0.65rem 0.9rem;border-radius:8px;font-size:0.83rem;margin-bottom:0.8rem;display:none;}
+  .alert.show{display:block;}
+  .alert-err{background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#f87171;}
+  .alert-ok{background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);color:var(--accent3);}
+
+  /* ── CV Table ── */
+  .cv-table{width:100%;border-collapse:collapse;font-size:0.87rem;}
+  .cv-table th{color:var(--muted);font-weight:500;padding:0.5rem 0.75rem;text-align:left;border-bottom:1px solid var(--border);}
+  .cv-table td{padding:0.65rem 0.75rem;border-bottom:1px solid rgba(99,179,237,0.06);}
+  .cv-table tr:last-child td{border-bottom:none;}
+
+  /* ── Password Section ── */
+  .tab-row{display:flex;gap:0.5rem;margin-bottom:1.2rem;}
+  .tab-btn{padding:0.45rem 1rem;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.85rem;cursor:pointer;transition:all 0.2s;}
+  .tab-btn.active{background:rgba(56,189,248,0.12);border-color:rgba(56,189,248,0.3);color:var(--accent);}
+
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .fade-in{animation:fadeIn 0.4s ease;}
+
+  @media(max-width:768px){
+    .sidebar{display:none;}
+    .main{margin-left:0;padding:1.2rem;}
+    .profile-hero{flex-direction:column;}
+    .stats-row{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-logo">AI<span>Career</span>Coach</div>
+  <nav class="sidebar-nav">
+    <a class="nav-item" href="/dashboard"><span class="icon">🏠</span> Dashboard</a>
+    <a class="nav-item" href="/interview"><span class="icon">🎥</span> Interview</a>
+    <a class="nav-item" href="/results"><span class="icon">📊</span> Results</a>
+    <a class="nav-item active" href="/profile"><span class="icon">👤</span> My Profile</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="avatar" id="sideAvatarEl">?</div>
+      <div>
+        <div class="user-name" id="sideNameEl">Loading...</div>
+        <div class="user-email" id="sideEmailEl">—</div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="logout()">Sign Out</button>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main fade-in">
+
+  <!-- Profile Hero -->
+  <div class="profile-hero">
+    <div class="avatar-wrap">
+      <div class="avatar-large" onclick="document.getElementById('picInput').click()" title="Change photo">
+        <span id="avatarInitial">?</span>
+        <img id="avatarImg" src="" alt="" style="display:none">
+      </div>
+      <div class="avatar-edit" onclick="document.getElementById('picInput').click()">✏️</div>
+      <input type="file" id="picInput" accept="image/*" onchange="uploadPicture(this)">
+    </div>
+    <div class="profile-meta">
+      <div class="profile-name" id="profileName">—</div>
+      <div class="profile-email" id="profileEmail">—</div>
+      <div class="profile-bio" id="profileBio" style="display:none"></div>
+      <div class="profile-links" id="profileLinks"></div>
+    </div>
+    <button class="btn-edit" onclick="openEditModal()">✏️ Edit Profile</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-val" id="statTotal">0</div>
+      <div class="stat-lbl">Interviews Completed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statFields">0</div>
+      <div class="stat-lbl">Fields Explored</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statMember">—</div>
+      <div class="stat-lbl">Member Since</div>
+    </div>
+  </div>
+
+  <!-- Interview History -->
+  <div class="section">
+    <div class="section-title"><div class="dot"></div> Interview History</div>
+    <div class="interview-list" id="interviewList">
+      <div class="empty-state">Loading interviews…</div>
+    </div>
+  </div>
+
+  <!-- CV Uploads -->
+  <div class="section">
+    <div class="section-title"><div class="dot"></div> CV Files Used</div>
+    <div id="cvSection"><div class="empty-state">Loading…</div></div>
+  </div>
+
+  <!-- Account Settings -->
+  <div class="section">
+    <div class="section-title"><div class="dot"></div> Account Settings</div>
+    <div id="pwTab">
+      <div class="alert alert-err" id="pwErr"></div>
+      <div class="alert alert-ok"  id="pwOk"></div>
+      <div class="form-group">
+        <label class="form-label">My Email</label>
+        <input type="email" class="form-input" id="pwEmail" readonly style="opacity:0.6;cursor:default">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Verifying Code</label>
+        <div style="display:flex;gap:0.5rem">
+          <input type="text" class="form-input" id="pwCode" placeholder="Enter 6-digit code" maxlength="6" style="flex:1">
+          <button class="btn-secondary" id="sendCodeBtn" onclick="sendChangeCode()" style="white-space:nowrap">Send Code</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">New Password</label>
+        <input type="password" class="form-input" id="newPw" placeholder="At least 6 characters">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm New Password</label>
+        <input type="password" class="form-input" id="confPw" placeholder="••••••••">
+      </div>
+      <button class="btn-primary" style="max-width:200px" onclick="changePassword()">Update Password</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-title">Edit Profile</div>
+    <div class="alert alert-err" id="editErr"></div>
+    <div class="alert alert-ok"  id="editOk"></div>
+    <div class="form-group">
+      <label class="form-label">Full Name *</label>
+      <input type="text" class="form-input" id="editName" placeholder="Your full name">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone</label>
+      <input type="text" class="form-input" id="editPhone" placeholder="+1 555 000 0000">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Bio</label>
+      <textarea class="form-input" id="editBio" placeholder="A short bio about yourself…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">LinkedIn URL</label>
+      <input type="url" class="form-input" id="editLinkedin" placeholder="https://linkedin.com/in/yourname">
+    </div>
+    <div class="form-group">
+      <label class="form-label">GitHub URL</label>
+      <input type="url" class="form-input" id="editGithub" placeholder="https://github.com/yourname">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveProfile()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let profileData = null;
+
+// ── Load profile ────────────────────────────────────────────────────────────
+async function loadProfile() {
+  try {
+    const res  = await fetch('/api/profile');
+    if (res.status === 401) { window.location.href = '/'; return; }
+    const data = await res.json();
+    profileData = data;
+    renderProfile(data);
+  } catch(e) { console.error('Profile load failed', e); }
+}
+
+function renderProfile(data) {
+  const u = data.user;
+  const s = data.stats;
+
+  // Sidebar
+  document.getElementById('sideNameEl').textContent  = u.full_name || 'User';
+  document.getElementById('sideEmailEl').textContent = u.email || '';
+  document.getElementById('sideAvatarEl').textContent = (u.full_name || 'U')[0].toUpperCase();
+
+  // Hero
+  document.getElementById('profileName').textContent  = u.full_name || '—';
+  document.getElementById('profileEmail').textContent = u.email || '—';
+  document.getElementById('avatarInitial').textContent = (u.full_name || 'U')[0].toUpperCase();
+  document.getElementById('pwEmail').value = u.email || '';
+
+  if (u.profile_picture) {
+    const img = document.getElementById('avatarImg');
+    img.src = `/uploads/profile_pics/${u.profile_picture}`;
+    img.style.display = 'block';
+    document.getElementById('avatarInitial').style.display = 'none';
+  }
+
+  if (u.bio) {
+    const bioEl = document.getElementById('profileBio');
+    bioEl.textContent  = u.bio;
+    bioEl.style.display = 'block';
+  }
+
+  // Links
+  const linksEl = document.getElementById('profileLinks');
+  linksEl.innerHTML = '';
+  if (u.phone)    linksEl.innerHTML += `<a class="profile-link" href="tel:${u.phone}">📞 ${u.phone}</a>`;
+  if (u.linkedin) linksEl.innerHTML += `<a class="profile-link" href="${u.linkedin}" target="_blank">🔗 LinkedIn</a>`;
+  if (u.github)   linksEl.innerHTML += `<a class="profile-link" href="${u.github}"   target="_blank">🐙 GitHub</a>`;
+
+  // Stats
+  document.getElementById('statTotal').textContent  = s.total_interviews || 0;
+  document.getElementById('statFields').textContent = s.fields_explored  || 0;
+  if (u.created_at) {
+    const d = new Date(u.created_at);
+    document.getElementById('statMember').textContent = d.toLocaleDateString('en-US', {month:'short', year:'numeric'});
+  }
+
+  // Interviews
+  renderInterviews(data.interviews || []);
+
+  // CVs
+  renderCVs(data.cvs || []);
+}
+
+function renderInterviews(interviews) {
+  const el = document.getElementById('interviewList');
+  if (!interviews.length) {
+    el.innerHTML = '<div class="empty-state">No interviews yet. <a href="/dashboard" style="color:var(--accent)">Start one →</a></div>';
+    return;
+  }
+  el.innerHTML = interviews.map(iv => {
+    const score   = iv.feedback?.overall_score ?? iv.feedback?.score ?? null;
+    const scoreTxt = score !== null ? `${score}/100` : 'N/A';
+    const scoreClass = score === null ? '' : score >= 75 ? 'score-high' : score >= 50 ? 'score-med' : 'score-low';
+    const date    = iv.completed_at ? new Date(iv.completed_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+    const fieldIcon = fieldEmoji(iv.field);
+    return `
+      <div class="interview-card" onclick="viewInterview('${iv.interview_id}')">
+        <div class="iv-icon">${fieldIcon}</div>
+        <div>
+          <div class="iv-field">${iv.field || 'General'}</div>
+          <div class="iv-date">📅 ${date}</div>
+        </div>
+        <div class="iv-score">
+          ${scoreClass ? `<span class="score-pill ${scoreClass}">${scoreTxt}</span>` : '<span style="color:var(--muted);font-size:0.8rem">N/A</span>'}
+          ${iv.cv_filename ? `<div class="iv-cv">📄 ${iv.cv_filename}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderCVs(cvs) {
+  const el = document.getElementById('cvSection');
+  if (!cvs.length) {
+    el.innerHTML = '<div class="empty-state">No CV files uploaded yet.</div>';
+    return;
+  }
+  el.innerHTML = `
+    <table class="cv-table">
+      <thead><tr><th>File</th><th>Field</th><th>Uploaded</th></tr></thead>
+      <tbody>
+        ${cvs.map(cv => `
+          <tr>
+            <td>📄 ${cv.original_name}</td>
+            <td>${cv.field || '—'}</td>
+            <td>${cv.uploaded_at ? new Date(cv.uploaded_at).toLocaleDateString() : '—'}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function fieldEmoji(field='') {
+  const f = field.toLowerCase();
+  if (f.includes('software') || f.includes('engineer')) return '💻';
+  if (f.includes('data')) return '📊';
+  if (f.includes('product')) return '🚀';
+  if (f.includes('design') || f.includes('ux')) return '🎨';
+  if (f.includes('market')) return '📣';
+  if (f.includes('finance')) return '💰';
+  if (f.includes('hr') || f.includes('human')) return '👥';
+  if (f.includes('sales')) return '🤝';
+  if (f.includes('security') || f.includes('cyber')) return '🔒';
+  if (f.includes('machine') || f.includes('ml')) return '🤖';
+  if (f.includes('devops')) return '⚙️';
+  return '🎯';
+}
+
+function viewInterview(id) {
+  // Navigate to results page with the interview id in sessionStorage
+  sessionStorage.setItem('view_interview_id', id);
+  window.location.href = '/results';
+}
+
+// ── Edit Modal ───────────────────────────────────────────────────────────────
+function openEditModal() {
+  const u = profileData?.user || {};
+  document.getElementById('editName').value     = u.full_name || '';
+  document.getElementById('editPhone').value    = u.phone    || '';
+  document.getElementById('editBio').value      = u.bio      || '';
+  document.getElementById('editLinkedin').value = u.linkedin || '';
+  document.getElementById('editGithub').value   = u.github   || '';
+  hideAlert('editErr'); hideAlert('editOk');
+  document.getElementById('editModal').classList.add('show');
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('show');
+}
+
+async function saveProfile() {
+  const name = document.getElementById('editName').value.trim();
+  if (!name) { showAlert('editErr', 'Name is required.'); return; }
+
+  try {
+    const res  = await fetch('/api/profile', {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        full_name: name,
+        phone:    document.getElementById('editPhone').value.trim(),
+        bio:      document.getElementById('editBio').value.trim(),
+        linkedin: document.getElementById('editLinkedin').value.trim(),
+        github:   document.getElementById('editGithub').value.trim(),
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showAlert('editOk', 'Profile updated!');
+      await loadProfile();
+      setTimeout(closeEditModal, 800);
+    } else {
+      showAlert('editErr', data.error || 'Update failed.');
+    }
+  } catch(e) { showAlert('editErr', 'Network error.'); }
+}
+
+// ── Profile Picture ──────────────────────────────────────────────────────────
+async function uploadPicture(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const fd = new FormData();
+  fd.append('picture', file);
+  try {
+    const res  = await fetch('/api/profile/picture', {method:'POST', body:fd});
+    const data = await res.json();
+    if (data.success) {
+      const img = document.getElementById('avatarImg');
+      img.src   = data.url + '?t=' + Date.now();
+      img.style.display = 'block';
+      document.getElementById('avatarInitial').style.display = 'none';
+    } else { alert(data.error || 'Upload failed'); }
+  } catch(e) { alert('Upload error'); }
+}
+
+// ── Change Password ──────────────────────────────────────────────────────────
+async function sendChangeCode() {
+  hideAlert('pwErr'); hideAlert('pwOk');
+  const btn = document.getElementById('sendCodeBtn');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  try {
+    const res  = await fetch('/api/profile/send-change-code', {method:'POST'});
+    const data = await res.json();
+    if (data.success) {
+      showAlert('pwOk', 'Verification code sent to your email.');
+      let secs = 30;
+      const iv = setInterval(() => {
+        btn.textContent = `Resend (${--secs}s)`;
+        if (secs <= 0) { clearInterval(iv); btn.disabled = false; btn.textContent = 'Send Code'; }
+      }, 1000);
+    } else {
+      showAlert('pwErr', data.error || 'Failed to send code.');
+      btn.disabled = false; btn.textContent = 'Send Code';
+    }
+  } catch(e) { showAlert('pwErr', 'Network error.'); btn.disabled = false; btn.textContent = 'Send Code'; }
+}
+
+async function changePassword() {
+  const code   = document.getElementById('pwCode').value.trim();
+  const newPw  = document.getElementById('newPw').value;
+  const confPw = document.getElementById('confPw').value;
+  hideAlert('pwErr'); hideAlert('pwOk');
+
+  if (!code)             { showAlert('pwErr','Enter the verification code.'); return; }
+  if (!newPw)            { showAlert('pwErr','Enter a new password.'); return; }
+  if (newPw !== confPw)  { showAlert('pwErr','New passwords do not match.'); return; }
+  if (newPw.length < 6)  { showAlert('pwErr','Password must be at least 6 characters.'); return; }
+
+  try {
+    const res  = await fetch('/api/profile/change-password', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({code, new_password: newPw})
+    });
+    const data = await res.json();
+    if (data.success) {
+      showAlert('pwOk', 'Password updated!');
+      document.getElementById('pwCode').value = '';
+      document.getElementById('newPw').value  = '';
+      document.getElementById('confPw').value = '';
+    } else { showAlert('pwErr', data.error || 'Failed to update password.'); }
+  } catch(e) { showAlert('pwErr', 'Network error.'); }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function showAlert(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.add('show');
+}
+function hideAlert(id) {
+  document.getElementById(id).classList.remove('show');
+}
+function switchTab(btn, tabId) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function logout() {
+  await fetch('/api/logout', {method:'POST'});
+  window.location.href = '/';
+}
+
+// Close modal on overlay click
+document.getElementById('editModal').addEventListener('click', function(e) {
+  if (e.target === this) closeEditModal();
+});
+
+// Init
+loadProfile();
+</script>
+</body>
+</html>
